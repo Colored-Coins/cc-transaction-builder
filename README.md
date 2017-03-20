@@ -78,6 +78,7 @@ Build an issuance transaction.
     - `hex`            String, the UTXO's locking script hex.
 - `issueAddress`       String, the Base58Check Bitcoin (or testnet) address which issues the asset, **required**. 
 - `amount`             Number, amount of units of the asset to issue, **required**.
+- `fee`                Number, transaction miner fee in satoshi, **required** (unless constructed with one of `defaultFee` and `defaultFeePerKb`.
 - `divisibility`       Number, how small is the smallest subdivision of the asset, calculated as 10^(-divisibility) (default=0).
 - `lockStatus`         Boolean, is the issued asset locked (can't be reissued) or unlocked (default=true).
 - `transfer`           Object[], array of transfer objects, each consists of:
