@@ -53,10 +53,11 @@ If `properties` is specified, then the default properties will be overridden.
 
 ```
 {
-  network: String,           // Which blockchain network should be used ('testnet' or 'mainnet', default='mainnet')
-  defaultFee: Number,        // Transaction miner fee, fixed (default=null)
-  defaultFeePerKb: Number,   // Transaction miner fee, per Kb (default=null)
-  mindustvalue: Number       // Minimum value to put in each output, in satoshi (except for OP_RETURN, default=600)
+  network: String,              // Which blockchain network should be used ('testnet' or 'mainnet', default='mainnet')
+  defaultFee: Number,           // Transaction miner fee, fixed (default=null)
+  defaultFeePerKb: Number,      // Transaction miner fee, per Kb (default=null)
+  mindustvalue: Number,         // Minimum value to put in each output, in satoshi (except for OP_RETURN, default=600)
+  mindustvaluemultisig: Number  // Minimum value to put in Multisig output, in satoshi (default=700)
 }
 ```
 
@@ -82,8 +83,11 @@ Build an issuance transaction.
 - `divisibility`       Number, how small is the smallest subdivision of the asset, calculated as 10^(-divisibility) (default=0).
 - `lockStatus`         Boolean, is the issued asset locked (can't be reissued) or unlocked (default=true).
 - `transfer`           Object[], array of transfer objects, each consists of:
-  - `amount`  Number, amount of units of the asset to transfer.
-  - `address` String, address to send the assets to.
+  - `amount`           Number, amount of units of the asset to transfer.
+  - `address`          String, address to send the assets to.
+- `flags`              Object, consists of:
+  - `injectPreviousOutput` Boolean, if true each input script will be its previous output script (default=false).
+  - `splitChange`      Boolean, split colored change and finance (BTC) change into 2 different outputs (default=false).
 - `torrentHash`        String, hex string of length 40 (result of metadata's torrent SHA1).
 - `sha2`               String, hex string of length 64 (result of metadata SHA2).
 

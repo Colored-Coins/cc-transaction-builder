@@ -1,0 +1,20 @@
+{
+  "name": "cc-transaction-builder",
+  "version": "0.1.0",
+  "description": "High-level abstraction for building ColoredCoins transactions",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "oleiba",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "bignumber.js": "^4.0.0",
+    "cc-assetid-encoder": "^0.6.2",
+    "cc-transaction": "^1.2.1",
+    "lodash": "^4.17.4"
+  },
+  "devDependencies": {
+    "clone": "^2.1.1"
+  }
+}
