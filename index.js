@@ -26,7 +26,7 @@ var ColoredCoinsBuilder = function (properties) {
   this.writemultisig = properties.writemultisig || true
 }
 
-ColoredCoinsBuilder.prototype.buildIssueTransaction = function (args, callback) {
+ColoredCoinsBuilder.prototype.buildIssueTransaction = function (args) {
   var self = this
   if (!args.utxos) {
     throw new Error('Must have "utxos"')
@@ -140,7 +140,7 @@ ColoredCoinsBuilder.prototype._getIssuanceCost = function (args) {
   }
 
   // TODO: calculate multisig only if actually needed
-  if (args.rules || args.metadata) {
+  if (args.metadata) {
     totalCost += self.writemultisig ? self.mindustvaluemultisig : 0
   }
 
@@ -406,7 +406,7 @@ ColoredCoinsBuilder.prototype._tryAddingInputsForFee = function(tx, utxos, total
   return true
 }
 
-ColoredCoinsBuilder.prototype.buildSendTransaction = function (args, callback) {
+ColoredCoinsBuilder.prototype.buildSendTransaction = function (args) {
   var self = this
   if (!args.utxos) {
     throw new Error('Must have "utxos"')
@@ -634,7 +634,7 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function(txb, args)
     return { txHex: txb.tx.toHex(), metadataSha1: args.torrentHash, multisigOutputs: reedemScripts, coloredOutputIndexes: _.uniqBy(coloredOutputIndexes) }
 }
 
-ColoredCoinsBuilder.prototype.buildBurnTransaction = function (args, callback) {
+ColoredCoinsBuilder.prototype.buildBurnTransaction = function (args) {
   var self = this
   args = args || {}
   var to = args.transfer || []
@@ -643,7 +643,7 @@ ColoredCoinsBuilder.prototype.buildBurnTransaction = function (args, callback) {
   to.push.apply(to, burn)
   delete args.transfer
   args.to = to
-  return self.buildSendTransaction(args, callback)
+  return self.buildSendTransaction(args)
 }
 
 module.exports = ColoredCoinsBuilder

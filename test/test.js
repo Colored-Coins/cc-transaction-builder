@@ -298,7 +298,7 @@ describe('builder.buildBurnTransaction(args)', function () {
     assert.deepEqual(result.coloredOutputIndexes, [1])
     var sumValueInputs = sendArgs.utxos[0].value
     var sumValueOutputs = _.sumBy(tx.outs, function (output) { return output.value })
-    assert.equal(sumValueInputs - sumValueOutputs, sendArgs.fee)
+    assert.equal(sumValueInputs - sumValueOutputs, burnArgs.fee)
     var opReturnScriptBuffer = script.decompile(tx.outs[0].script)[1]
     var ccTransaction = CC.fromHex(opReturnScriptBuffer)
     console.log("cccc", ccTransaction)
