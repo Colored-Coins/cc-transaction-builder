@@ -25,7 +25,6 @@ var issueArgs = {
 }
 
 describe('builder.buildIssueTransaction(args)', function () {
-
   it('throws: Must have "utxos"', function (done) {
     var args = clone(issueArgs)
     delete args.utxos
@@ -138,27 +137,27 @@ describe('builder.buildIssueTransaction(args)', function () {
 var sendArgs = {
   utxos: [
     {
-      txid: "9ad3154af0fba1c7ff399935f55680810faaf1e382f419fe1247e43edb12941d",
+      txid: '9ad3154af0fba1c7ff399935f55680810faaf1e382f419fe1247e43edb12941d',
       index: 3,
       value: 9789000,
       used: false,
       blockheight: 577969,
       blocktime: 1444861908000,
       scriptPubKey: {
-        asm:"OP_DUP OP_HASH160 0e8fffc70907a025e65f0bdbc5ec6bb2d326d3a7 OP_EQUALVERIFY OP_CHECKSIG",
-        hex: "76a9140e8fffc70907a025e65f0bdbc5ec6bb2d326d3a788ac",
+        asm: 'OP_DUP OP_HASH160 0e8fffc70907a025e65f0bdbc5ec6bb2d326d3a7 OP_EQUALVERIFY OP_CHECKSIG',
+        hex: '76a9140e8fffc70907a025e65f0bdbc5ec6bb2d326d3a788ac',
         reqSigs: 1,
-        type: "pubkeyhash",
-        addresses: ["mgqxFyV13aG2HQpnQ2bLKTUwm8wTPtssQ5"]
+        type: 'pubkeyhash',
+        addresses: ['mgqxFyV13aG2HQpnQ2bLKTUwm8wTPtssQ5']
       },
       assets: [
         {
-          assetId: "Ua4XPaYTew2DiFNmLT9YDAnvRGeYnsiY1UwV9j",
+          assetId: 'Ua4XPaYTew2DiFNmLT9YDAnvRGeYnsiY1UwV9j',
           amount: 50,
-          issueTxid:"3b598a4048557ab507952ee5705040ab1a184e54ed70f31e0e20b0be7549cd09",
-          divisibility:2,
+          issueTxid: '3b598a4048557ab507952ee5705040ab1a184e54ed70f31e0e20b0be7549cd09',
+          divisibility: 2,
           lockStatus: false,
-          aggregationPolicy: "aggregatable"
+          aggregationPolicy: 'aggregatable'
         }
       ]
     }
@@ -168,7 +167,6 @@ var sendArgs = {
 }
 
 describe('builder.buildSendTransaction(args)', function () {
-
   it('throws: Must have "utxos"', function (done) {
     var args = clone(sendArgs)
     delete args.utxos
@@ -258,27 +256,27 @@ describe('builder.buildSendTransaction(args)', function () {
 var burnArgs = {
   utxos: [
     {
-      txid: "9ad3154af0fba1c7ff399935f55680810faaf1e382f419fe1247e43edb12941d",
+      txid: '9ad3154af0fba1c7ff399935f55680810faaf1e382f419fe1247e43edb12941d',
       index: 3,
       value: 9789000,
       used: false,
       blockheight: 577969,
       blocktime: 1444861908000,
       scriptPubKey: {
-        asm:"OP_DUP OP_HASH160 0e8fffc70907a025e65f0bdbc5ec6bb2d326d3a7 OP_EQUALVERIFY OP_CHECKSIG",
-        hex: "76a9140e8fffc70907a025e65f0bdbc5ec6bb2d326d3a788ac",
+        asm: 'OP_DUP OP_HASH160 0e8fffc70907a025e65f0bdbc5ec6bb2d326d3a7 OP_EQUALVERIFY OP_CHECKSIG',
+        hex: '76a9140e8fffc70907a025e65f0bdbc5ec6bb2d326d3a788ac',
         reqSigs: 1,
-        type: "pubkeyhash",
-        addresses: ["mgqxFyV13aG2HQpnQ2bLKTUwm8wTPtssQ5"]
+        type: 'pubkeyhash',
+        addresses: ['mgqxFyV13aG2HQpnQ2bLKTUwm8wTPtssQ5']
       },
       assets: [
         {
-          assetId: "Ua4XPaYTew2DiFNmLT9YDAnvRGeYnsiY1UwV9j",
+          assetId: 'Ua4XPaYTew2DiFNmLT9YDAnvRGeYnsiY1UwV9j',
           amount: 50,
-          issueTxid:"3b598a4048557ab507952ee5705040ab1a184e54ed70f31e0e20b0be7549cd09",
-          divisibility:2,
+          issueTxid: '3b598a4048557ab507952ee5705040ab1a184e54ed70f31e0e20b0be7549cd09',
+          divisibility: 2,
           lockStatus: false,
-          aggregationPolicy: "aggregatable"
+          aggregationPolicy: 'aggregatable'
         }
       ]
     }
@@ -301,7 +299,7 @@ describe('builder.buildBurnTransaction(args)', function () {
     assert.equal(sumValueInputs - sumValueOutputs, burnArgs.fee)
     var opReturnScriptBuffer = script.decompile(tx.outs[0].script)[1]
     var ccTransaction = CC.fromHex(opReturnScriptBuffer)
-    console.log("cccc", ccTransaction)
+    console.log('cccc', ccTransaction)
     assert.equal(ccTransaction.type, 'burn')
     assert.equal(ccTransaction.payments[0].burn, true)
     assert.equal(ccTransaction.payments[0].input, 0)

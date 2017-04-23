@@ -1,5 +1,6 @@
 var _ = require('lodash')
 var bitcoinjs = require('bitcoinjs-lib')
+var Buffer = require('safe-buffer').Buffer
 
 var findBestMatchByNeededAssets = function (utxos, assetList, key, txb, inputvalues, metadata) {
   console.log('findBestMatchByNeededAssets: start for ' + key)
@@ -24,7 +25,7 @@ var findBestMatchByNeededAssets = function (utxos, assetList, key, txb, inputval
     if (!found) selectedUtxos.length = 0
   }
 
-  console.log('selectedUtxos = ',  _.map(selectedUtxos, function (utxo) { return { utxo: (utxo.txid + ':' + utxo.index), amount: getUtxoAssetAmount(utxo, key) } }))
+  console.log('selectedUtxos = ', _.map(selectedUtxos, function (utxo) { return { utxo: (utxo.txid + ':' + utxo.index), amount: getUtxoAssetAmount(utxo, key) } }))
 
   if (!selectedUtxos.length) {
     console.log('not enough amount')
@@ -36,7 +37,6 @@ var findBestMatchByNeededAssets = function (utxos, assetList, key, txb, inputval
   selectedUtxos.some(function (utxo) {
     utxo.assets.forEach(function (asset) {
       try {
-        var overflow = true
         console.log('maybe adding input for ' + asset.assetId)
         if (assetList[asset.assetId] && !assetList[asset.assetId].done) {
           console.log('probably adding input for ' + asset.assetId)
@@ -57,7 +57,8 @@ var findBestMatchByNeededAssets = function (utxos, assetList, key, txb, inputval
             console.log('setting input in asset list')
             if (metadata.flags && metadata.flags.injectPreviousOutput) {
               var chunks = bitcoinjs.script.decompile(new Buffer(utxo.scriptPubKey.hex, 'hex'))
-              txb.tx.ins[txb.tx.ins.length - 1].script = bitcoinjs.script.compile(chunks)            }
+              txb.tx.ins[txb.tx.ins.length - 1].script = bitcoinjs.script.compile(chunks)
+            }
           }
 
           var aggregationPolicy = asset.aggregationPolicy || 'aggregatable'  // TODO - remove after all assets have this field
