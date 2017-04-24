@@ -105,6 +105,46 @@ On success, returns JSON which consists of:
 
 On failure, may throw an `Error`.
 
+*The description of the 2 following functions will be expanded in the future:*
+
+### `builder.buildSendTransaction(args)`
+
+`args` is a JSON of the format:
+
+- `utxos`
+  - `txid`
+  - `index`
+  - `value`
+  - `scriptPubKey`
+    - `addresses`
+    - `hex`
+  - `assets`
+    - `assetId`
+    - `amount`
+- `to`
+  - `address`
+  - `amount`
+  - `assetId`
+- `fee`
+
+### `builder.buildIssueTransaction(args)`
+
+`args` is a JSON of the format:
+
+- `utxos`
+  - `txid`
+  - `index`
+  - `value`
+  - `scriptPubKey`
+    - `addresses`
+    - `hex`
+  - `assets`
+    - `assetId`
+    - `amount`
+- `burn`
+  - `amount`
+  - `assetId`
+- `fee`
 
 [npm-image]: https://badge.fury.io/js/cc-transaction-builder.svg
 [npm-url]: https://npmjs.org/package/cc-transaction-builder
