@@ -1,4 +1,8 @@
 # cc-transaction-builder
+[![Build Status][travis-image]][travis-url] [![NPM version][npm-image]][npm-url] [![Slack Channel][slack-image]][slack-url]
+
+[![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
+
 ColoredCoins Transaction Builder.<br>
 This module is a high-level abstraction for building transactions for issuing and transferring digital assets using the ColoredCoins protocol.
 
@@ -77,7 +81,7 @@ Build an issuance transaction.
   - `scriptPubKey`     Object, cosnists of:
     - `addresses`      String[], array of addresses the output is directed to.
     - `hex`            String, the UTXO's locking script hex.
-- `issueAddress`       String, the Base58Check Bitcoin (or testnet) address which issues the asset, **required**. 
+- `issueAddress`       String, the Base58Check Bitcoin (or testnet) address which issues the asset, **required**.
 - `amount`             Number, amount of units of the asset to issue, **required**.
 - `fee`                Number, transaction miner fee in satoshi, **required** (unless constructed with one of `defaultFee` and `defaultFeePerKb`.
 - `divisibility`       Number, how small is the smallest subdivision of the asset, calculated as 10^(-divisibility) (default=0).
@@ -102,4 +106,9 @@ On success, returns JSON which consists of:
 On failure, may throw an `Error`.
 
 
-
+[npm-image]: https://badge.fury.io/js/cc-transaction-builder.svg
+[npm-url]: https://npmjs.org/package/cc-transaction-builder
+[travis-image]: https://travis-ci.org/Colored-Coins/cc-transaction-builder.svg?branch=master
+[travis-url]: https://travis-ci.org/Colored-Coins/cc-transaction-builder
+[slack-image]: http://slack.coloredcoins.org/badge.svg
+[slack-url]: http://slack.coloredcoins.org
