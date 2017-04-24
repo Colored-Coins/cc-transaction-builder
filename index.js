@@ -6,6 +6,7 @@ var cc = require('cc-transaction')
 var findBestMatchByNeededAssets = require('./modules/findBestMatchByNeededAssets')
 var Buffer = require('safe-buffer').Buffer
 var debug = require('debug')('cc-transaction-builder')
+var errors = require('cc-errors')
 
 var CC_TX_VERSION = 0x02
 
@@ -49,7 +50,7 @@ ColoredCoinsBuilder.prototype.buildIssueTransaction = function (args) {
   // find inputs to cover the issuance
   var ccArgs = self._addInputsForIssueTransaction(txb, args)
   if (!ccArgs.success) {
-    throw new Error('Not enough funds to cover issuance')
+    throw new errors.NotEnoughFundsError({ type: 'issue' })
   }
   _.assign(ccArgs, args)
   var res = self._encodeColorScheme(ccArgs)
@@ -228,7 +229,7 @@ ColoredCoinsBuilder.prototype._encodeColorScheme = function (args) {
   }
 
   if (coloredAmount < 0) {
-    throw new Error('transferring more than issued')
+    throw new errors.CCTransactionConstructionError({ explanation: 'transferring more than issued' })
   }
 
   // add OP_RETURN
@@ -271,7 +272,12 @@ ColoredCoinsBuilder.prototype._encodeColorScheme = function (args) {
   var lastOutputValue = args.totalInputs.amount - (allOutputValues + fee)
   if (lastOutputValue < self.mindustvalue) {
     var totalCost = self.mindustvalue + args.totalInputs.amount.toNumber()
-    throw new Error('Not enough funds for issuance. fee: ' + fee + ', totalCost: ', totalCost, ', missing: ', self.mindustvalue - lastOutputValue)
+    throw new errors.NotEnoughFundsError({
+      type: 'issuance',
+      fee: fee,
+      totalCost: totalCost,
+      missing: self.mindustvalue - lastOutputValue
+    })
   }
 
   if (args.flags && args.flags.splitChange && lastOutputValue >= 2 * self.mindustvalue && coloredAmount > 0) {
@@ -507,7 +513,12 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
   debug('reached encoder')
   var encoder = cc.newTransaction(0x4343, CC_TX_VERSION)
   if (!self._tryAddingInputsForFee(txb.tx, args.utxos, totalInputs, args, satoshiCost)) {
-    throw new Error('Not enough satoshis to cover transfer transaction. Fee is ' + args.fee + ', total cost is ' + satoshiCost + ' and ' + satoshiCost - totalInputs.amount + ' is missing')
+    throw new errors.NotEnoughFundsError({
+      type: 'issuance',
+      fee: args.fee,
+      totalCost: satoshiCost,
+      missing: satoshiCost - totalInputs.amount
+    })
   }
 
   for (asset in assetList) {
@@ -515,7 +526,7 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
     debug('encoding asset ' + asset)
     if (!currentAsset.done) {
       debug('current asset state is bad ' + asset)
-      throw new Error('Not enough units of asset ' + asset + ' to cover transfer transaction')
+      throw new errors.NotEnoughAssetsError({ asset: asset })
     }
 
     debug(currentAsset.addresses)
@@ -573,7 +584,7 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
     encoder.shiftOutputs()
     reedemScripts.forEach(function (item) { item.index += 1 })
     buffer = encoder.encode()
-    if (buffer.leftover.length === 1) { self._addHashesOutput(txb.tx, args.pubKeyReturnMultisigDust, buffer.leftover[0]) } else if (buffer.leftover.length === 2) { self._addHashesOutput(txb.tx, args.pubKeyReturnMultisigDust, buffer.leftover[1], buffer.leftover[0]) } else { throw new Error('Colored transaction construction failed') }
+    if (buffer.leftover.length === 1) { self._addHashesOutput(txb.tx, args.pubKeyReturnMultisigDust, buffer.leftover[0]) } else if (buffer.leftover.length === 2) { self._addHashesOutput(txb.tx, args.pubKeyReturnMultisigDust, buffer.leftover[1], buffer.leftover[0]) } else { throw new errors.CCTransactionConstructionError() }
   }
 
    // add array of colored ouput indexes
@@ -598,7 +609,12 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
     debug('trying to add additionl inputs to cover transaction')
     satoshiCost = self._getInputAmountNeededForTx(txb.tx, args.fee) + numOfChanges * self.mindustvalue
     if (!self._tryAddingInputsForFee(txb.tx, args.utxos, totalInputs, args, satoshiCost)) {
-      throw new Error('Not enough satoshis to cover transfer transaction. Fee is ' + args.fee + ', total cost is ' + satoshiCost + ' and ' + self.mindustvalue - lastOutputValue + ' is missing')
+      throw new errors.NotEnoughFundsError({
+        type: 'transfer',
+        fee: args.fee,
+        totalCost: satoshiCost,
+        missing: self.mindustvalue - lastOutputValue
+      })
     }
     lastOutputValue = self._getChangeAmount(txb.tx, args.fee, totalInputs)
   }
