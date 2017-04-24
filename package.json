@@ -10,6 +10,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "bignumber.js": "^4.0.0",
+    "bitcoinjs-lib": "^3.0.2",
     "cc-assetid-encoder": "^0.6.2",
     "cc-errors": "0.0.8",
     "cc-transaction": "^1.2.1",
