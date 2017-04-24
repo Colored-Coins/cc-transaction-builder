@@ -12,6 +12,7 @@
     "bignumber.js": "^4.0.0",
     "cc-assetid-encoder": "^0.6.2",
     "cc-transaction": "^1.2.1",
+    "debug": "^2.6.4",
     "lodash": "^4.17.4",
     "safe-buffer": "^5.0.1"
   },

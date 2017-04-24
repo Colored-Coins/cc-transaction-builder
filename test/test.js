@@ -63,7 +63,6 @@ describe('builder.buildIssueTransaction(args)', function () {
 
   it('returns valid response with default values', function (done) {
     var result = ccb.buildIssueTransaction(issueArgs)
-    console.log('result', result)
     assert(result.txHex)
     var tx = Transaction.fromHex(result.txHex)
     assert.equal(tx.ins.length, 1)
@@ -196,7 +195,6 @@ describe('builder.buildSendTransaction(args)', function () {
 
   it('returns valid response with default values', function (done) {
     var result = ccb.buildSendTransaction(sendArgs)
-    console.log('result', result)
     assert(result.txHex)
     var tx = Transaction.fromHex(result.txHex)
     assert.equal(tx.ins.length, 1)
@@ -288,7 +286,6 @@ var burnArgs = {
 describe('builder.buildBurnTransaction(args)', function () {
   it('returns valid response with default values', function (done) {
     var result = ccb.buildBurnTransaction(burnArgs)
-    console.log('result', result)
     assert(result.txHex)
     var tx = Transaction.fromHex(result.txHex)
     assert.equal(tx.ins.length, 1)
@@ -299,7 +296,6 @@ describe('builder.buildBurnTransaction(args)', function () {
     assert.equal(sumValueInputs - sumValueOutputs, burnArgs.fee)
     var opReturnScriptBuffer = script.decompile(tx.outs[0].script)[1]
     var ccTransaction = CC.fromHex(opReturnScriptBuffer)
-    console.log('cccc', ccTransaction)
     assert.equal(ccTransaction.type, 'burn')
     assert.equal(ccTransaction.payments[0].burn, true)
     assert.equal(ccTransaction.payments[0].input, 0)

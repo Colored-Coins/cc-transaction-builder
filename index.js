@@ -5,6 +5,7 @@ var encodeAssetId = require('cc-assetid-encoder')
 var cc = require('cc-transaction')
 var findBestMatchByNeededAssets = require('./modules/findBestMatchByNeededAssets')
 var Buffer = require('safe-buffer').Buffer
+var debug = require('debug')('cc-transaction-builder')
 
 var CC_TX_VERSION = 0x02
 
@@ -92,12 +93,12 @@ ColoredCoinsBuilder.prototype._addInputsForIssueTransaction = function (txb, arg
   var change = new BigNumber(0)
   var hasEnoughEquity = utxos.some(function (utxo) {
     if (!isInputInTx(txb.tx, utxo.txid, utxo.index) && !(utxo.assets && utxo.assets.length)) {
-      console.log('current amount ' + utxo.value + ' needed ' + cost)
-      console.log('utxo.txid', utxo.txid)
-      console.log('utxo.index', utxo.index)
+      debug('current amount ' + utxo.value + ' needed ' + cost)
+      debug('utxo.txid', utxo.txid)
+      debug('utxo.index', utxo.index)
       txb.addInput(utxo.txid, utxo.index)
       if (txb.tx.ins.length === 1) { // encode asset
-        console.log(txb.tx.ins[0].script)
+        debug(txb.tx.ins[0].script)
         assetId = self._encodeAssetId(
           args.reissueable,
           utxo.txid,
@@ -106,26 +107,26 @@ ColoredCoinsBuilder.prototype._addInputsForIssueTransaction = function (txb, arg
           args.divisibility,
           args.aggregationPolicy)
       }
-      console.log('math: ' + current.toNumber() + ' ' + utxo.value)
+      debug('math: ' + current.toNumber() + ' ' + utxo.value)
       current = current.add(utxo.value)
       if (args.flags && args.flags.injectPreviousOutput) {
         var chunks = bitcoinjs.script.decompile(new Buffer(utxo.scriptPubKey.hex, 'hex'))
         txb.tx.ins[txb.tx.ins.length - 1].script = bitcoinjs.script.compile(chunks)
       }
-      console.log('current amount: ' + current + ' projected cost: ' + cost + ' are were there yet: ' + (current.comparedTo(cost) >= 0))
+      debug('current amount: ' + current + ' projected cost: ' + cost + ' are were there yet: ' + (current.comparedTo(cost) >= 0))
     } else {
-      console.log('skipping utxo for input, asset found in utxo: ' + utxo.txid + ':' + utxo.index)
+      debug('skipping utxo for input, asset found in utxo: ' + utxo.txid + ':' + utxo.index)
     }
     return current.comparedTo(cost) >= 0
   })
-  console.log('hasEnoughEquity: ' + hasEnoughEquity)
+  debug('hasEnoughEquity: ' + hasEnoughEquity)
   if (!hasEnoughEquity) {
     return {success: false}
   }
 
   change = current - cost
-  console.log('finished adding inputs to tx')
-  console.log('change ' + change)
+  debug('finished adding inputs to tx')
+  debug('change ' + change)
   return {success: true, txb: txb, change: change, assetId: assetId, totalInputs: { amount: current }}
 }
 
@@ -133,7 +134,7 @@ ColoredCoinsBuilder.prototype._getIssuanceCost = function (args) {
   var self = this
   var fee = args.fee || self.defaultFee
   var totalCost = fee
-  console.log('_getTotalIssuenceCost: fee =', fee)
+  debug('_getTotalIssuenceCost: fee =', fee)
   if (args.transfer && args.transfer.length) {
     args.transfer.forEach(function (to) {
       totalCost += self.mindustvalue
@@ -148,7 +149,7 @@ ColoredCoinsBuilder.prototype._getIssuanceCost = function (args) {
   // change
   totalCost += self.mindustvalue
 
-  console.log('_getTotalIssuenceCost: totalCost =', totalCost)
+  debug('_getTotalIssuenceCost: totalCost =', totalCost)
   return totalCost
 }
 
@@ -170,15 +171,15 @@ ColoredCoinsBuilder.prototype._encodeAssetId = function (reissueable, txid, nvou
   }
 
   if (!reissueable) {
-    console.log('sending assetIdEncoder locked, first input = ' + txid + ':' + nvout)
+    debug('sending assetIdEncoder locked, first input = ' + txid + ':' + nvout)
   } else {
-    console.log('sending assetIdEncoder unlocked, first input previousOutput = ', opts.vin[0].previousOutput)
+    debug('sending assetIdEncoder unlocked, first input previousOutput = ', opts.vin[0].previousOutput)
   }
 
-  console.log('encoding asset is locked: ' + !reissueable)
-  console.log(opts)
+  debug('encoding asset is locked: ' + !reissueable)
+  debug(opts)
   var assetId = encodeAssetId(opts)
-  console.log('assetId: ' + assetId)
+  debug('assetId: ' + assetId)
   return assetId
 }
 
@@ -212,7 +213,7 @@ ColoredCoinsBuilder.prototype._encodeColorScheme = function (args) {
 
   if (args.transfer) {
     args.transfer.forEach(function (transferobj, i) {
-      console.log('payment ' + transferobj.amount + ' ' + txb.tx.outs.length)
+      debug('payment ' + transferobj.amount + ' ' + txb.tx.outs.length)
       encoder.addPayment(0, transferobj.amount, txb.tx.outs.length)
       coloredAmount -= transferobj.amount
       // check multisig
@@ -231,10 +232,10 @@ ColoredCoinsBuilder.prototype._encodeColorScheme = function (args) {
   }
 
   // add OP_RETURN
-  console.log('before encode done')
+  debug('before encode done')
   var buffer = encoder.encode()
 
-  console.log('encoding done, buffer: ', buffer)
+  debug('encoding done, buffer: ', buffer)
   if (buffer.leftover && buffer.leftover.length > 0) {
     encoder.shiftOutputs()
     buffer = encoder.encode()
@@ -266,7 +267,7 @@ ColoredCoinsBuilder.prototype._encodeColorScheme = function (args) {
 
   // add change
   var allOutputValues = _.sumBy(txb.tx.outs, function (output) { return output.value })
-  console.log('all inputs: ' + args.totalInputs.amount + ' all outputs: ' + allOutputValues)
+  debug('all inputs: ' + args.totalInputs.amount + ' all outputs: ' + allOutputValues)
   var lastOutputValue = args.totalInputs.amount - (allOutputValues + fee)
   if (lastOutputValue < self.mindustvalue) {
     var totalCost = self.mindustvalue + args.totalInputs.amount.toNumber()
@@ -276,7 +277,7 @@ ColoredCoinsBuilder.prototype._encodeColorScheme = function (args) {
   if (args.flags && args.flags.splitChange && lastOutputValue >= 2 * self.mindustvalue && coloredAmount > 0) {
     var bitcoinChange = lastOutputValue - self.mindustvalue
     lastOutputValue = self.mindustvalue
-    console.log('adding bitcoin change output with: ' + bitcoinChange)
+    debug('adding bitcoin change output with: ' + bitcoinChange)
     txb.addOutput(args.issueAddress, bitcoinChange)
   }
 
@@ -285,12 +286,12 @@ ColoredCoinsBuilder.prototype._encodeColorScheme = function (args) {
     coloredOutputIndexes.push(txb.tx.outs.length)
   }
 
-  console.log('adding change output with: ' + lastOutputValue)
-  console.log('total inputs: ' + args.totalInputs.amount)
-  console.log('total fee: ' + fee)
-  console.log('total output without fee: ' + allOutputValues)
+  debug('adding change output with: ' + lastOutputValue)
+  debug('total inputs: ' + args.totalInputs.amount)
+  debug('total fee: ' + fee)
+  debug('total output without fee: ' + allOutputValues)
   txb.addOutput(args.issueAddress, lastOutputValue || args.change)
-  console.log('txHex ', txb.tx.toHex())
+  debug('txHex ', txb.tx.toHex())
 
   return { txHex: txb.tx.toHex(), multisigOutputs: reedemScripts, coloredOutputIndexes: _.uniq(coloredOutputIndexes) }
 }
@@ -322,7 +323,7 @@ ColoredCoinsBuilder.prototype._addHashesOutput = function (tx, address, sha2, sh
   }
   chunks.push(bitcoinjs.opcodes.OP_CHECKMULTISIG)
 
-  console.log('chunks', chunks)
+  debug('chunks', chunks)
 
   var script = bitcoinjs.script.compile(chunks)
 
@@ -345,7 +346,7 @@ function isInputInTx (tx, txid, index) {
 }
 
 ColoredCoinsBuilder.prototype._insertSatoshiToTransaction = function (utxos, tx, missing, inputsValue, metadata) {
-  console.log('missing: ' + missing)
+  debug('missing: ' + missing)
   var paymentDone = false
   var missingbn = new BigNumber(missing)
   var financeValue = new BigNumber(0)
@@ -353,10 +354,10 @@ ColoredCoinsBuilder.prototype._insertSatoshiToTransaction = function (utxos, tx,
   if (metadata.financeOutput && metadata.financeOutputTxid) {
     if (isInputInTx(tx, metadata.financeOutputTxid, metadata.financeOutput.n)) { return false }
     financeValue = new BigNumber(metadata.financeOutput.value)
-    console.log('finance sent through api with value ' + financeValue.toNumber())
+    debug('finance sent through api with value ' + financeValue.toNumber())
     if (financeValue.minus(missingbn) >= 0) {
       // TODO: check there is no asset here
-      console.log('funding tx ' + metadata.financeOutputTxid)
+      debug('funding tx ' + metadata.financeOutputTxid)
       tx.addInput(metadata.financeOutputTxid, metadata.financeOutput.n)
       inputsValue.amount += financeValue.toNumber()
       if (metadata.flags && metadata.flags.injectPreviousOutput) {
@@ -366,16 +367,16 @@ ColoredCoinsBuilder.prototype._insertSatoshiToTransaction = function (utxos, tx,
       paymentDone = true
       return paymentDone
     } else {
-      console.log('finance output not added to transaction finace value: ' + financeValue.toNumber() + ' still needed: ' + missingbn.toNumber())
+      debug('finance output not added to transaction finace value: ' + financeValue.toNumber() + ' still needed: ' + missingbn.toNumber())
     }
   } else {
-    console.log('no financeOutput was given')
+    debug('no financeOutput was given')
   }
 
   var hasEnoughEquity = utxos.some(function (utxo) {
     utxo.value = Math.round(utxo.value)
     if (!isInputInTx(tx, utxo.txid, utxo.index) && !(utxo.assets && utxo.assets.length)) {
-      console.log('current amount ' + utxo.value + ' needed ' + missing)
+      debug('current amount ' + utxo.value + ' needed ' + missing)
       tx.addInput(utxo.txid, utxo.index)
       inputsValue.amount += utxo.value
       currentAmount = currentAmount.add(utxo.value)
@@ -387,19 +388,19 @@ ColoredCoinsBuilder.prototype._insertSatoshiToTransaction = function (utxos, tx,
     return currentAmount.comparedTo(missingbn) >= 0
   })
 
-  console.log('hasEnoughEquity: ' + hasEnoughEquity)
+  debug('hasEnoughEquity: ' + hasEnoughEquity)
 
   return hasEnoughEquity
 }
 
 ColoredCoinsBuilder.prototype._tryAddingInputsForFee = function (tx, utxos, totalInputs, metadata, satoshiCost) {
-  console.log('tryAddingInputsForFee: current transaction value: ' + totalInputs.amount + ' projected cost: ' + satoshiCost)
+  debug('tryAddingInputsForFee: current transaction value: ' + totalInputs.amount + ' projected cost: ' + satoshiCost)
   if (satoshiCost > totalInputs.amount) {
     if (!this._insertSatoshiToTransaction(utxos, tx, (satoshiCost - totalInputs.amount), totalInputs, metadata)) {
-      console.log('not enough satoshi in account for fees')
+      debug('not enough satoshi in account for fees')
       return false
     }
-  } else { console.log('No need for additional finance') }
+  } else { debug('No need for additional finance') }
   return true
 }
 
@@ -432,7 +433,7 @@ ColoredCoinsBuilder.prototype._computeCost = function (withfee, args) {
 
   fee += this.mindustvalue
 
-  console.log('comupteCost: ' + fee)
+  debug('comupteCost: ' + fee)
   return fee
 }
 
@@ -447,7 +448,7 @@ ColoredCoinsBuilder.prototype._getInputAmountNeededForTx = function (tx, fee) {
 
 ColoredCoinsBuilder.prototype._getChangeAmount = function (tx, fee, totalInputValue) {
   var allOutputValues = _.sumBy(tx.outs, function (output) { return output.value })
-  console.log('getChangeAmount: all inputs: ' + totalInputValue.amount + ' all outputs: ' + allOutputValues)
+  debug('getChangeAmount: all inputs: ' + totalInputValue.amount + ' all outputs: ' + allOutputValues)
   return (totalInputValue.amount - (allOutputValues + fee))
 }
 
@@ -458,15 +459,15 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
   var reedemScripts = []
   var coloredOutputIndexes = []
 
-  console.log('addInputsForSendTransaction')
+  debug('addInputsForSendTransaction')
 
-  if (args.from) { console.log('got unspents for address: ' + args.from + ' from block explorer') } else {
-    console.log('got unspent from parmameter: ' + args.sendutxo + ' from block explorer')
+  if (args.from) { debug('got unspents for address: ' + args.from + ' from block explorer') } else {
+    debug('got unspent from parmameter: ' + args.sendutxo + ' from block explorer')
     if (args.utxos[0] && args.utxos[0].scriptPubKey && args.utxos[0].scriptPubKey.addresses && args.utxos[0].scriptPubKey.addresses[0]) { args.from = args.utxos[0].scriptPubKey.addresses[0] }
   }
   var assetList = []
   args.to.forEach(function (to) {
-    console.log(to.assetId)
+    debug(to.assetId)
     if (!assetList[to.assetId]) { assetList[to.assetId] = { amount: 0, addresses: [], done: false, change: 0, encodeAmount: 0, inputs: [] } }
     assetList[to.assetId].amount += to.amount
     if (to.burn) {
@@ -477,33 +478,33 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
     } else { assetList[to.assetId].addresses.push({ address: to.address, amount: to.amount }) }
   })
 
-  console.log('finshed creating per asset list')
+  debug('finshed creating per asset list')
   for (var asset in assetList) {
-    console.log('working on asset: ' + asset)
-    console.log(args.utxos)
+    debug('working on asset: ' + asset)
+    debug(args.utxos)
     var assetUtxos = args.utxos.filter(function (element, index, array) {
       if (!element.assets) { return false }
       return element.assets.some(function (a) {
-        console.log('checking ' + a.assetId + ' and ' + asset)
+        debug('checking ' + a.assetId + ' and ' + asset)
         return (a.assetId === asset)
       })
     })
     if (assetUtxos && assetUtxos.length > 0) {
-      console.log('have utxo list')
+      debug('have utxo list')
       var key = asset
       assetUtxos.forEach(function (utxo) {
         if (utxo.used) {
-          console.log('utxo', utxo)
+          debug('utxo', utxo)
           throw new Error('Output ' + utxo.txid + ':' + utxo.index + ' is already spent!')
         }
       })
       if (!findBestMatchByNeededAssets(assetUtxos, assetList, key, txb, totalInputs, args)) { throw new Error('Not enough units of asset ' + key + ' to cover transfer transaction') }
     } else {
-      console.log('no utxo list')
+      debug('no utxo list')
       throw new Error('No output with the requested asset: ' + asset)
     }
   }
-  console.log('reached encoder')
+  debug('reached encoder')
   var encoder = cc.newTransaction(0x4343, CC_TX_VERSION)
   if (!self._tryAddingInputsForFee(txb.tx, args.utxos, totalInputs, args, satoshiCost)) {
     throw new Error('Not enough satoshis to cover transfer transaction. Fee is ' + args.fee + ', total cost is ' + satoshiCost + ' and ' + satoshiCost - totalInputs.amount + ' is missing')
@@ -511,34 +512,34 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
 
   for (asset in assetList) {
     var currentAsset = assetList[asset]
-    console.log('encoding asset ' + asset)
+    debug('encoding asset ' + asset)
     if (!currentAsset.done) {
-      console.log('current asset state is bad ' + asset)
+      debug('current asset state is bad ' + asset)
       throw new Error('Not enough units of asset ' + asset + ' to cover transfer transaction')
     }
 
-    console.log(currentAsset.addresses)
+    debug(currentAsset.addresses)
     var uniqAssets = _.uniqBy(currentAsset.addresses, function (item) { return item.address })
-    console.log('uniqAssets = ', uniqAssets)
+    debug('uniqAssets = ', uniqAssets)
     uniqAssets.forEach(function (address) {
-      console.log('adding output ' + (txb.tx.outs ? txb.tx.outs.length : 0) + ' for address: ' + address.address + ' with satoshi value ' + self.mindustvalue + ' asset value: ' + address.amount)
+      debug('adding output ' + (txb.tx.outs ? txb.tx.outs.length : 0) + ' for address: ' + address.address + ' with satoshi value ' + self.mindustvalue + ' asset value: ' + address.amount)
       var addressAmountLeft = address.amount
-      console.log('currentAsset = ', currentAsset, ', currentAsset.inputs.length = ', currentAsset.inputs.length)
+      debug('currentAsset = ', currentAsset, ', currentAsset.inputs.length = ', currentAsset.inputs.length)
       currentAsset.inputs.some(function (input) {
         if (!input.amount) { return false }
         if (addressAmountLeft - input.amount > 0) {
-          console.log('mapping to input ' + input.index + ' with amount ' + input.amount)
+          debug('mapping to input ' + input.index + ' with amount ' + input.amount)
           if (address.address === 'burn') {
             encoder.addBurn(input.index, input.amount)
           } else {
             encoder.addPayment(input.index, input.amount, (txb.tx.outs ? txb.tx.outs.length : 0))
           }
           addressAmountLeft -= input.amount
-          console.log('left to map from next input ' + addressAmountLeft)
+          debug('left to map from next input ' + addressAmountLeft)
           input.amount = 0
           return false
         } else {
-          console.log('mapping to input ' + input.index + ' with amount ' + addressAmountLeft)
+          debug('mapping to input ' + input.index + ' with amount ' + addressAmountLeft)
           if (address.address === 'burn') {
             encoder.addBurn(input.index, addressAmountLeft)
           } else {
@@ -549,7 +550,7 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
           return true
         }
       })
-      console.log('putting output in transaction')
+      debug('putting output in transaction')
       if (address.address !== 'burn') {
         txb.addOutput(address.address, self.mindustvalue)
       }
@@ -557,12 +558,12 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
         reedemScripts.push({ index: txb.tx.outs.length - 1, reedemScript: address.reedemScript, address: address.address })
       }
 
-      console.log(txb.tx)
-      console.log('adding output ' + (txb.tx.outs.length - 1))
+      debug(txb.tx)
+      debug('adding output ' + (txb.tx.outs.length - 1))
     })
-    console.log('done adding colored outputs')
+    debug('done adding colored outputs')
   }
-  console.log('before using encoder')
+  debug('before using encoder')
     // add metadata if we have any
   if (args.torrentHash && args.sha2 && self.writemultisig) {
     encoder.setHash(args.torrentHash, args.sha2)
@@ -580,7 +581,7 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
     if (typeof payment.output !== 'undefined') coloredOutputIndexes.push(payment.output)
   })
 
-  console.log('encoding done')
+  debug('encoding done')
   var ret = bitcoinjs.script.compile([
     bitcoinjs.opcodes.OP_RETURN,
     buffer.codeBuffer
@@ -594,7 +595,7 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
   var numOfChanges = (args.flags && args.flags.splitChange && coloredChange && lastOutputValue >= 2 * self.mindustvalue) ? 2 : 1
 
   if (lastOutputValue < numOfChanges * self.mindustvalue) {
-    console.log('trying to add additionl inputs to cover transaction')
+    debug('trying to add additionl inputs to cover transaction')
     satoshiCost = self._getInputAmountNeededForTx(txb.tx, args.fee) + numOfChanges * self.mindustvalue
     if (!self._tryAddingInputsForFee(txb.tx, args.utxos, totalInputs, args, satoshiCost)) {
       throw new Error('Not enough satoshis to cover transfer transaction. Fee is ' + args.fee + ', total cost is ' + satoshiCost + ' and ' + self.mindustvalue - lastOutputValue + ' is missing')
@@ -610,7 +611,7 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
     coloredOutputIndexes.push(txb.tx.outs.length)
   }
   txb.addOutput(Array.isArray(args.from) ? args.from[0] : args.from, lastOutputValue)
-  console.log('success')
+  debug('success')
   return { txHex: txb.tx.toHex(), metadataSha1: args.torrentHash, multisigOutputs: reedemScripts, coloredOutputIndexes: _.uniqBy(coloredOutputIndexes) }
 }
 
