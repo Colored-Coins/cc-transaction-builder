@@ -263,8 +263,8 @@ describe('builder.buildSendTransaction(args)', function () {
     var tx = Transaction.fromHex(result.txHex)
     var opReturnScriptBuffer = script.decompile(tx.outs[tx.outs.length - 2].script)[1]
     var ccTransaction = CC.fromHex(opReturnScriptBuffer)
-    assert.equal(ccTransaction.multiSig[0].hashType, "sha2")
-    assert.equal(ccTransaction.multiSig[1].hashType, "torrentHash")
+    assert.equal(ccTransaction.multiSig[0].hashType, 'sha2')
+    assert.equal(ccTransaction.multiSig[1].hashType, 'torrentHash')
     done()
   })
 
