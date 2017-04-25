@@ -152,7 +152,7 @@ var sendArgs = {
       assets: [
         {
           assetId: 'Ua4XPaYTew2DiFNmLT9YDAnvRGeYnsiY1UwV9j',
-          amount: 50,
+          amount: 500,
           issueTxid: '3b598a4048557ab507952ee5705040ab1a184e54ed70f31e0e20b0be7549cd09',
           divisibility: 2,
           lockStatus: false,
@@ -211,6 +211,60 @@ describe('builder.buildSendTransaction(args)', function () {
     assert.equal(ccTransaction.payments[0].input, 0)
     assert.equal(ccTransaction.payments[0].percent, false)
     assert.equal(ccTransaction.payments[0].amount, sendArgs.to[0].amount)
+    done()
+  })
+
+  it('returns valid response with default values', function (done) {
+    var addresses = [
+      'mtr98kany9G1XYNU74pRnfBQmaCg2FZLmc',
+      'mtrD2mBMp93bc8SmMa9WK6tteUCtYEuQQz',
+      'mtr98kany9G1XYNU74pRnfBQmaCg2FZLmc',
+      'mivV5HAfYpBQRy7BNUPMWHKAnEg7yVT5Wh',
+      'mtr98kany9G1XYNU74pRnfBQmaCg2FZLmc',
+      'n1utwqxiwFn6p6P4fjBytbwNWvFUy5tKVq',
+      'mtr98kany9G1XYNU74pRnfBQmaCg2FZLmc',
+      'mpp9gLXWszG4FwPM8pUEUTiqHAcUc99J5Y',
+      'muEK4mzoFJ8XpwTZ6Nj87g7RJbTjjrhZTC',
+      'mtaqc9M2svVynsrSunGV9LN63YcWYPGAaD',
+      'mtmxEhx1ucf2k9XofrgmsthWnYmKeLXU1c',
+      'mwxkhhJUnS8TUiaMB1Gmfk3zu2QJuHcEiV',
+      'mhhzCzpJSz7LiRWwSSjQEZ4NsLKvBzY2sK',
+      'n2ug8FVg4oBBb4qyMVPwzqj4QowHuM9Hi1',
+      'n15wwcX6Zgu7krWV1EXEdSLLTeCvUutvTM',
+      'mni9h4mUNsdiGBSJQoMdzeKsCXmTvxxvid',
+      'miQ7sSXkmoek3ZcwhZHNCFnVfncTs341UC',
+      'miYMk1nKQQWVmMH5xsJRKyqEnHfJf9pEeF',
+      'msNcXmKjLYKgMM9TiyQjAvJ69w1L63Zp4N',
+      'myhb6JeUJy1JvyVuq5tXJZbADU6EMH24vo',
+      'n13Utk1gZv65R9hmBPd2B7m5v4P2gZvwrG',
+      'mhKnKtPFCbYpC61buDMgSBB57mqiWvXCUo',
+      'my6kMPNS5MdtfDMF9NLXNjkpkHokvoT3qR',
+      'mhKnKtPFCbYpC61buDMgSBB57mqiWvXCUo',
+      'mjKZeM23nEu7qViqTT3Nd6KCQYcw58WhGc',
+      '2N3GSnGbfS36M7u6dynXVyBcbPs9mCUHwEM',
+      '2NC8ftGyT9YhZbKvvqFwC8rct4dbqiCyGCM',
+      'mxFfdSEbQtqe5GLzLiFFENeRYufomdtFhc',
+      'mn5aNzZ2PeaopcyeMxzz7K5k2WK27e6oEm',
+      'mqEk4DsCoVMav9NiEjCxJsEHnNGvity8Pz',
+      'n2gmBqufUfkcfPF1iKkRM41gaFZLHhmCjL',
+      'n27rLEmKU4AbVKntw3mkyQzjGSvXrdpAqc',
+      'n1nB1jCx9ABDPvsdbw7AptyZK1WP55xY3X',
+      'mzj9s6mgvCRhzmgVQk27K1L5tNhU2nkA3A'
+    ]
+
+    var args = clone(sendArgs)
+    for (var address of addresses) {
+      args.to.push({ address: address, amount: 1, assetId: 'Ua4XPaYTew2DiFNmLT9YDAnvRGeYnsiY1UwV9j' })
+    }
+    args.sha2 = '59040d5c3bc91b5e28e014541363c0f64d9a2429541fe6cf1c568c63c85fbb20'
+    args.torrentHash = '02fcc3d843eaba4d278ed107c0c2b56a146f66b8'
+    var result = ccb.buildSendTransaction(args)
+    assert(result.txHex)
+    var tx = Transaction.fromHex(result.txHex)
+    var opReturnScriptBuffer = script.decompile(tx.outs[tx.outs.length - 2].script)[1]
+    var ccTransaction = CC.fromHex(opReturnScriptBuffer)
+    assert.equal(ccTransaction.multiSig[0].hashType, "sha2")
+    assert.equal(ccTransaction.multiSig[1].hashType, "torrentHash")
     done()
   })
 

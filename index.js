@@ -18,11 +18,8 @@ var ColoredCoinsBuilder = function (properties) {
   }
   this.network = properties.network || 'mainnet' // 'testnet' or 'mainnet'
 
-  if (properties.defaultFee && properties.defaultFeePerKb) {
-    throw new Error('Can have at most one of "defaultFee" and "defaultFeePerKb"')
-  }
   this.defaultFee = properties.defaultFee
-  this.defaultFeePerKb = properties.defaultFeePerKb
+  this.defaultFeePerKb = properties.defaultFeePerKb || 25000
 
   this.mindustvalue = properties.mindustvalue || 600
   this.mindustvaluemultisig = properties.mindustvaluemultisig || 700
@@ -34,7 +31,7 @@ ColoredCoinsBuilder.prototype.buildIssueTransaction = function (args) {
   if (!args.utxos) {
     throw new Error('Must have "utxos"')
   }
-  if (!args.fee && !self.defaultFee && !self.defaultFeePerKb) {
+  if (!args.fee && !self.defaultFee) {
     throw new Error('Must have "fee"')
   }
   if (!args.issueAddress) {
@@ -309,7 +306,7 @@ ColoredCoinsBuilder.prototype._generateMultisigAddress = function (pubKeys, m) {
     ecpubkeys.push(bitcoinjs.ECPubKey.fromHex(key))
   })
   var script = bitcoinjs.scripts.multisigOutput(m, ecpubkeys)
-  var hash = bitcoinjs.crypto.hash160(script.toBuffer())
+  var hash = bitcoinjs.crypto.hash160(script)
   var multisigAdress = new bitcoinjs.Address(hash, (self.network === 'testnet') ? 0xc4 : 0x05)
   var sendto = multisigAdress.toBase58Check()
   return { address: sendto, reedemScript: script.toHex() }
@@ -341,7 +338,7 @@ ColoredCoinsBuilder.prototype._addHashesOutput = function (tx, address, sha2, sh
 ColoredCoinsBuilder.prototype._getNoneMinDustByScript = function (script) {
   var self = this
   // add 9 to aacount for bitcoind SER_DISK serilaztion before the multiplication
-  return (((self.defaultFeePerKb * (script.toBuffer().length + 148 + 9)) / 1000) * 3)
+  return (((self.defaultFeePerKb * (script.length + 148 + 9)) / 1000) * 3)
 }
 
 function isInputInTx (tx, txid, index) {
@@ -418,7 +415,7 @@ ColoredCoinsBuilder.prototype.buildSendTransaction = function (args) {
   if (!args.to) {
     throw new Error('Must have "to"')
   }
-  if (!args.fee && !self.defaultFee && !self.defaultFeePerKb) {
+  if (!args.fee && !self.defaultFee) {
     throw new Error('Must have "fee"')
   }
 
@@ -584,7 +581,13 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
     encoder.shiftOutputs()
     reedemScripts.forEach(function (item) { item.index += 1 })
     buffer = encoder.encode()
-    if (buffer.leftover.length === 1) { self._addHashesOutput(txb.tx, args.pubKeyReturnMultisigDust, buffer.leftover[0]) } else if (buffer.leftover.length === 2) { self._addHashesOutput(txb.tx, args.pubKeyReturnMultisigDust, buffer.leftover[1], buffer.leftover[0]) } else { throw new errors.CCTransactionConstructionError() }
+    if (buffer.leftover.length === 1) {
+      self._addHashesOutput(txb.tx, args.pubKeyReturnMultisigDust, buffer.leftover[0])
+    } else if (buffer.leftover.length === 2) {
+      self._addHashesOutput(txb.tx, args.pubKeyReturnMultisigDust, buffer.leftover[1], buffer.leftover[0])
+    } else {
+      throw new errors.CCTransactionConstructionError()
+    }
   }
 
    // add array of colored ouput indexes
