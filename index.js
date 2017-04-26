@@ -7,6 +7,7 @@ var findBestMatchByNeededAssets = require('./modules/findBestMatchByNeededAssets
 var Buffer = require('safe-buffer').Buffer
 var debug = require('debug')('cc-transaction-builder')
 var errors = require('cc-errors')
+var bufferReverse = require('buffer-reverse')
 
 var CC_TX_VERSION = 0x02
 
@@ -343,7 +344,7 @@ ColoredCoinsBuilder.prototype._getNoneMinDustByScript = function (script) {
 
 function isInputInTx (tx, txid, index) {
   return tx.ins.some(function (input) {
-    var id = bitcoinjs.bufferutils.reverse(input.hash)
+    var id = bufferReverse(input.hash)
     return (id.toString('hex') === txid && input.index === index)
   })
 }
@@ -465,7 +466,7 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
   debug('addInputsForSendTransaction')
 
   if (args.from) { debug('got unspents for address: ' + args.from + ' from block explorer') } else {
-    debug('got unspent from parmameter: ' + args.sendutxo + ' from block explorer')
+    debug('got unspent from parmameter: ' + args.utxos + ' from block explorer')
     if (args.utxos[0] && args.utxos[0].scriptPubKey && args.utxos[0].scriptPubKey.addresses && args.utxos[0].scriptPubKey.addresses[0]) { args.from = args.utxos[0].scriptPubKey.addresses[0] }
   }
   var assetList = []

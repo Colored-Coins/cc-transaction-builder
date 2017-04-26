@@ -1,6 +1,6 @@
 {
   "name": "cc-transaction-builder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "High-level abstraction for building ColoredCoins transactions",
   "main": "index.js",
   "scripts": {
@@ -11,6 +11,7 @@
   "dependencies": {
     "bignumber.js": "^4.0.0",
     "bitcoinjs-lib": "^3.0.2",
+    "buffer-reverse": "^1.0.1",
     "cc-assetid-encoder": "^0.6.2",
     "cc-errors": "0.0.8",
     "cc-transaction": "^1.2.1",
