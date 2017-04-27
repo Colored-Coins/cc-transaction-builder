@@ -349,24 +349,24 @@ function isInputInTx (tx, txid, index) {
   })
 }
 
-ColoredCoinsBuilder.prototype._insertSatoshiToTransaction = function (utxos, tx, missing, inputsValue, metadata) {
+ColoredCoinsBuilder.prototype._insertSatoshiToTransaction = function (utxos, txb, missing, inputsValue, metadata) {
   debug('missing: ' + missing)
   var paymentDone = false
   var missingbn = new BigNumber(missing)
   var financeValue = new BigNumber(0)
   var currentAmount = new BigNumber(0)
   if (metadata.financeOutput && metadata.financeOutputTxid) {
-    if (isInputInTx(tx, metadata.financeOutputTxid, metadata.financeOutput.n)) { return false }
+    if (isInputInTx(txb.tx, metadata.financeOutputTxid, metadata.financeOutput.n)) { return false }
     financeValue = new BigNumber(metadata.financeOutput.value)
     debug('finance sent through api with value ' + financeValue.toNumber())
     if (financeValue.minus(missingbn) >= 0) {
       // TODO: check there is no asset here
       debug('funding tx ' + metadata.financeOutputTxid)
-      tx.addInput(metadata.financeOutputTxid, metadata.financeOutput.n)
+      txb.tx.addInput(metadata.financeOutputTxid, metadata.financeOutput.n)
       inputsValue.amount += financeValue.toNumber()
       if (metadata.flags && metadata.flags.injectPreviousOutput) {
         var chunks = bitcoinjs.script.decompile(new Buffer(metadata.financeOutput.scriptPubKey.hex, 'hex'))
-        tx.ins[tx.ins.length - 1].script = bitcoinjs.script.compile(chunks)
+        txb.tx.ins[txb.ins.length - 1].script = bitcoinjs.script.compile(chunks)
       }
       paymentDone = true
       return paymentDone
@@ -379,14 +379,14 @@ ColoredCoinsBuilder.prototype._insertSatoshiToTransaction = function (utxos, tx,
 
   var hasEnoughEquity = utxos.some(function (utxo) {
     utxo.value = Math.round(utxo.value)
-    if (!isInputInTx(tx, utxo.txid, utxo.index) && !(utxo.assets && utxo.assets.length)) {
+    if (!isInputInTx(txb.tx, utxo.txid, utxo.index) && !(utxo.assets && utxo.assets.length)) {
       debug('current amount ' + utxo.value + ' needed ' + missing)
-      tx.addInput(utxo.txid, utxo.index)
+      txb.addInput(utxo.txid, utxo.index)
       inputsValue.amount += utxo.value
       currentAmount = currentAmount.add(utxo.value)
       if (metadata.flags && metadata.flags.injectPreviousOutput) {
         var chunks = bitcoinjs.script.decompile(new Buffer(utxo.scriptPubKey.hex, 'hex'))
-        tx.ins[tx.ins.length - 1].script = bitcoinjs.script.compile(chunks)
+        txb.tx.ins[txb.tx.ins.length - 1].script = bitcoinjs.script.compile(chunks)
       }
     }
     return currentAmount.comparedTo(missingbn) >= 0
@@ -397,10 +397,10 @@ ColoredCoinsBuilder.prototype._insertSatoshiToTransaction = function (utxos, tx,
   return hasEnoughEquity
 }
 
-ColoredCoinsBuilder.prototype._tryAddingInputsForFee = function (tx, utxos, totalInputs, metadata, satoshiCost) {
+ColoredCoinsBuilder.prototype._tryAddingInputsForFee = function (txb, utxos, totalInputs, metadata, satoshiCost) {
   debug('tryAddingInputsForFee: current transaction value: ' + totalInputs.amount + ' projected cost: ' + satoshiCost)
   if (satoshiCost > totalInputs.amount) {
-    if (!this._insertSatoshiToTransaction(utxos, tx, (satoshiCost - totalInputs.amount), totalInputs, metadata)) {
+    if (!this._insertSatoshiToTransaction(utxos, txb, (satoshiCost - totalInputs.amount), totalInputs, metadata)) {
       debug('not enough satoshi in account for fees')
       return false
     }
@@ -510,7 +510,7 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
   }
   debug('reached encoder')
   var encoder = cc.newTransaction(0x4343, CC_TX_VERSION)
-  if (!self._tryAddingInputsForFee(txb.tx, args.utxos, totalInputs, args, satoshiCost)) {
+  if (!self._tryAddingInputsForFee(txb, args.utxos, totalInputs, args, satoshiCost)) {
     throw new errors.NotEnoughFundsError({
       type: 'issuance',
       fee: args.fee,
@@ -612,7 +612,7 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
   if (lastOutputValue < numOfChanges * self.mindustvalue) {
     debug('trying to add additionl inputs to cover transaction')
     satoshiCost = self._getInputAmountNeededForTx(txb.tx, args.fee) + numOfChanges * self.mindustvalue
-    if (!self._tryAddingInputsForFee(txb.tx, args.utxos, totalInputs, args, satoshiCost)) {
+    if (!self._tryAddingInputsForFee(txb, args.utxos, totalInputs, args, satoshiCost)) {
       throw new errors.NotEnoughFundsError({
         type: 'transfer',
         fee: args.fee,
