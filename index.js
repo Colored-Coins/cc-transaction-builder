@@ -19,11 +19,13 @@ var ColoredCoinsBuilder = function (properties) {
   }
   this.network = properties.network || 'mainnet' // 'testnet' or 'mainnet'
 
-  this.defaultFee = properties.defaultFee
-  this.defaultFeePerKb = properties.defaultFeePerKb || 25000
+  if (properties.defaultFee) {
+    this.defaultFee = parseInt(properties.defaultFee)
+  }
+  this.defaultFeePerKb = parseInt(properties.defaultFeePerKb) || 25000
 
-  this.mindustvalue = properties.mindustvalue || 600
-  this.mindustvaluemultisig = properties.mindustvaluemultisig || 700
+  this.mindustvalue = parseInt(properties.mindustvalue) || 600
+  this.mindustvaluemultisig = parseInt(properties.mindustvaluemultisig) || 700
   this.writemultisig = properties.writemultisig || true
 }
 
@@ -41,6 +43,11 @@ ColoredCoinsBuilder.prototype.buildIssueTransaction = function (args) {
   if (!args.amount) {
     throw new Error('Must have "amount"')
   }
+
+  if (args.fee) {
+    args.fee = parseInt(args.fee)
+  }
+
   args.divisibility = args.divisibility || 0
   args.aggregationPolicy = args.aggregationPolicy || 'aggregatable'
 
@@ -398,9 +405,10 @@ ColoredCoinsBuilder.prototype._insertSatoshiToTransaction = function (utxos, txb
 }
 
 ColoredCoinsBuilder.prototype._tryAddingInputsForFee = function (txb, utxos, totalInputs, metadata, satoshiCost) {
+  var self = this
   debug('tryAddingInputsForFee: current transaction value: ' + totalInputs.amount + ' projected cost: ' + satoshiCost)
   if (satoshiCost > totalInputs.amount) {
-    if (!this._insertSatoshiToTransaction(utxos, txb, (satoshiCost - totalInputs.amount), totalInputs, metadata)) {
+    if (!self._insertSatoshiToTransaction(utxos, txb, (satoshiCost - totalInputs.amount), totalInputs, metadata)) {
       debug('not enough satoshi in account for fees')
       return false
     }
@@ -420,22 +428,27 @@ ColoredCoinsBuilder.prototype.buildSendTransaction = function (args) {
     throw new Error('Must have "fee"')
   }
 
+  if (args.fee) {
+    args.fee = parseInt(args.fee)
+  }
+
   var txb = new bitcoinjs.TransactionBuilder(self.network === 'testnet' ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin)
 
   return self._addInputsForSendTransaction(txb, args)
 }
 
 ColoredCoinsBuilder.prototype._computeCost = function (withfee, args) {
+  var self = this
   var fee = withfee ? (args.fee || args.minfee) : 0
 
   if (args.to && args.to.length) {
     args.to.forEach(function (to) {
-      fee += this.mindustvalue
+      fee += self.mindustvalue
     })
   }
-  if (args.rules || args.metadata) { fee += this.writemultisig ? this.mindustvaluemultisig : 0 }
+  if (args.rules || args.metadata) { fee += self.writemultisig ? self.mindustvaluemultisig : 0 }
 
-  fee += this.mindustvalue
+  fee += self.mindustvalue
 
   debug('comupteCost: ' + fee)
   return fee
