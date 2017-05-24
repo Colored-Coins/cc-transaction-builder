@@ -478,24 +478,32 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
 
   debug('addInputsForSendTransaction')
 
-  if (args.from) { debug('got unspents for address: ' + args.from + ' from block explorer') } else {
-    debug('got unspent from parmameter: ' + args.utxos + ' from block explorer')
-    if (args.utxos[0] && args.utxos[0].scriptPubKey && args.utxos[0].scriptPubKey.addresses && args.utxos[0].scriptPubKey.addresses[0]) { args.from = args.utxos[0].scriptPubKey.addresses[0] }
+  if (args.from) {
+    debug('got unspents for address: ' + args.from)
+  } else {
+    debug('got unspents from parmameter: ' + args.utxos)
+    if (args.utxos[0] && args.utxos[0].scriptPubKey && args.utxos[0].scriptPubKey.addresses && args.utxos[0].scriptPubKey.addresses[0]) {
+      args.from = args.utxos[0].scriptPubKey.addresses[0]
+    }
   }
-  var assetList = []
+  var assetList = {}
   args.to.forEach(function (to) {
     debug(to.assetId)
-    if (!assetList[to.assetId]) { assetList[to.assetId] = { amount: 0, addresses: [], done: false, change: 0, encodeAmount: 0, inputs: [] } }
+    if (!assetList[to.assetId]) {
+      assetList[to.assetId] = { amount: 0, addresses: [], done: false, change: 0, encodeAmount: 0, inputs: [] }
+    }
     assetList[to.assetId].amount += to.amount
     if (to.burn) {
       assetList[to.assetId].addresses.push({ address: 'burn', amount: to.amount })
     } else if (!to.address && to.pubKeys && to.m) { // generate a multisig address, remember to return the redeem scripts
       var multisig = self._generateMultisigAddress(to.pubKeys, to.m)
       assetList[to.assetId].addresses.push({ address: multisig.address, amount: to.amount, reedemScript: multisig.reedemScript })
-    } else { assetList[to.assetId].addresses.push({ address: to.address, amount: to.amount }) }
+    } else {
+      assetList[to.assetId].addresses.push({ address: to.address, amount: to.amount })
+    }
   })
 
-  debug('finshed creating per asset list')
+  debug('finished creating per asset list')
   for (var asset in assetList) {
     debug('working on asset: ' + asset)
     debug(args.utxos)
