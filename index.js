@@ -285,11 +285,14 @@ ColoredCoinsBuilder.prototype._encodeColorScheme = function (args) {
     })
   }
 
-  if (args.flags && args.flags.splitChange && lastOutputValue >= 2 * self.mindustvalue && coloredAmount > 0) {
+  var splitChange = !(args.financeChangeAddress == false)
+  var changeAddress = args.financeChangeAddress || args.issueAddress
+
+  if (splitChange && lastOutputValue >= 2 * self.mindustvalue && coloredAmount > 0) {
     var bitcoinChange = lastOutputValue - self.mindustvalue
     lastOutputValue = self.mindustvalue
     debug('adding bitcoin change output with: ' + bitcoinChange)
-    txb.addOutput(args.issueAddress, bitcoinChange)
+    txb.addOutput(changeAddress, bitcoinChange)
   }
 
   if (coloredAmount > 0) {
@@ -628,7 +631,11 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
   var coloredChange = _.keys(assetList).some(function (assetId) {
     return assetList[assetId].change > 0
   })
-  var numOfChanges = (args.flags && args.flags.splitChange && coloredChange && lastOutputValue >= 2 * self.mindustvalue) ? 2 : 1
+
+  var splitChange = !(args.financeChangeAddress == false)
+  var changeAddress = args.financeChangeAddress || (Array.isArray(args.from) ? args.from[0] : args.from)
+
+  var numOfChanges = (splitChange && coloredChange && lastOutputValue >= 2 * self.mindustvalue) ? 2 : 1
 
   if (lastOutputValue < numOfChanges * self.mindustvalue) {
     debug('trying to add additionl inputs to cover transaction')
@@ -645,7 +652,7 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
   }
 
   if (numOfChanges === 2) {
-    txb.addOutput(Array.isArray(args.from) ? args.from[0] : args.from, lastOutputValue - self.mindustvalue)
+    txb.addOutput(changeAddress, lastOutputValue - self.mindustvalue)
     lastOutputValue = self.mindustvalue
   }
   if (coloredChange) {

@@ -66,9 +66,9 @@ describe('builder.buildIssueTransaction(args)', function () {
     assert(result.txHex)
     var tx = Transaction.fromHex(result.txHex)
     assert.equal(tx.ins.length, 1)
-    assert.equal(tx.outs.length, 2) // OP_RETURN + change
+    assert.equal(tx.outs.length, 3) // OP_RETURN + 2 changes
     assert(result.assetId)
-    assert.deepEqual(result.coloredOutputIndexes, [1])
+    assert.deepEqual(result.coloredOutputIndexes, [2])
     var sumValueInputs = issueArgs.utxos[0].value
     var sumValueOutputs = _.sumBy(tx.outs, function (output) { return output.value })
     assert.equal(sumValueInputs - sumValueOutputs, issueArgs.fee)
@@ -96,13 +96,13 @@ describe('builder.buildIssueTransaction(args)', function () {
 
   it('should split change', function (done) {
     var args = clone(issueArgs)
-    args.flags = {splitChange: true}
+    args.financeChangeAddress = false
     var result = ccb.buildIssueTransaction(args)
     assert(result.txHex)
     var tx = Transaction.fromHex(result.txHex)
     assert.equal(tx.ins.length, 1)
-    assert.equal(tx.outs.length, 3) // OP_RETURN + 2 changes
-    assert.deepEqual(result.coloredOutputIndexes, [2])
+    assert.equal(tx.outs.length, 2) // OP_RETURN + 1 change
+    assert.deepEqual(result.coloredOutputIndexes, [1])
     done()
   })
 
@@ -198,8 +198,8 @@ describe('builder.buildSendTransaction(args)', function () {
     assert(result.txHex)
     var tx = Transaction.fromHex(result.txHex)
     assert.equal(tx.ins.length, 1)
-    assert.equal(tx.outs.length, 3) // transfer + OP_RETURN + change
-    assert.deepEqual(result.coloredOutputIndexes, [0, 2])
+    assert.equal(tx.outs.length, 4) // transfer + OP_RETURN + 2 changes
+    assert.deepEqual(result.coloredOutputIndexes, [0, 3])
     var sumValueInputs = sendArgs.utxos[0].value
     var sumValueOutputs = _.sumBy(tx.outs, function (output) { return output.value })
     assert.equal(sumValueInputs - sumValueOutputs, sendArgs.fee)
@@ -261,7 +261,7 @@ describe('builder.buildSendTransaction(args)', function () {
     var result = ccb.buildSendTransaction(args)
     assert(result.txHex)
     var tx = Transaction.fromHex(result.txHex)
-    var opReturnScriptBuffer = script.decompile(tx.outs[tx.outs.length - 2].script)[1]
+    var opReturnScriptBuffer = script.decompile(tx.outs[tx.outs.length - 3].script)[1]
     var ccTransaction = CC.fromHex(opReturnScriptBuffer)
     assert.equal(ccTransaction.multiSig[0].hashType, 'sha2')
     assert.equal(ccTransaction.multiSig[1].hashType, 'torrentHash')
@@ -292,15 +292,15 @@ describe('builder.buildSendTransaction(args)', function () {
     done()
   })
 
-  it('should split change', function (done) {
+  it('should not split change', function (done) {
     var args = clone(sendArgs)
-    args.flags = {splitChange: true}
+    args.financeChangeAddress = false
     var result = ccb.buildSendTransaction(args)
     assert(result.txHex)
     var tx = Transaction.fromHex(result.txHex)
     assert.equal(tx.ins.length, 1)
-    assert.equal(tx.outs.length, 4) // transfer + OP_RETURN + 2 changes
-    assert.deepEqual(result.coloredOutputIndexes, [0, 3])
+    assert.equal(tx.outs.length, 3) // transfer + OP_RETURN + 1 change
+    assert.deepEqual(result.coloredOutputIndexes, [0, 2])
     done()
   })
 })
@@ -343,8 +343,8 @@ describe('builder.buildBurnTransaction(args)', function () {
     assert(result.txHex)
     var tx = Transaction.fromHex(result.txHex)
     assert.equal(tx.ins.length, 1)
-    assert.equal(tx.outs.length, 2) // OP_RETURN + change
-    assert.deepEqual(result.coloredOutputIndexes, [1])
+    assert.equal(tx.outs.length, 3) // OP_RETURN + 2 changes
+    assert.deepEqual(result.coloredOutputIndexes, [2])
     var sumValueInputs = sendArgs.utxos[0].value
     var sumValueOutputs = _.sumBy(tx.outs, function (output) { return output.value })
     assert.equal(sumValueInputs - sumValueOutputs, burnArgs.fee)
