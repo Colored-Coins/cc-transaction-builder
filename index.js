@@ -27,12 +27,13 @@ var ColoredCoinsBuilder = function (properties) {
   }
   this.defaultFeePerKb = parseInt(properties.defaultFeePerKb) || 25000
 
+  this.returnBuilder = properties.returnBuilder
   this.mindustvalue = parseInt(properties.mindustvalue) || 600
   this.mindustvaluemultisig = parseInt(properties.mindustvaluemultisig) || 700
   this.writemultisig = properties.writemultisig || true
 }
 
-ColoredCoinsBuilder.prototype.getNetwork = function() {
+ColoredCoinsBuilder.prototype._getNetwork = function() {
   switch (this.network){
     case 'testnet':
       return bitcoinjs.networks.testnet
@@ -66,7 +67,7 @@ ColoredCoinsBuilder.prototype.buildIssueTransaction = function (args) {
 
   args.divisibility = args.divisibility || 0
   args.aggregationPolicy = args.aggregationPolicy || 'aggregatable'
-  var txb = new bitcoinjs.TransactionBuilder(this.getNetwork())
+  var txb = new bitcoinjs.TransactionBuilder(this._getNetwork())
   // find inputs to cover the issuance
   var ccArgs = self._addInputsForIssueTransaction(txb, args)
   if (!ccArgs.success) {
@@ -75,6 +76,7 @@ ColoredCoinsBuilder.prototype.buildIssueTransaction = function (args) {
   _.assign(ccArgs, args)
   var res = self._encodeColorScheme(ccArgs)
   res.assetId = ccArgs.assetId
+  if (this.returnBuilder) res.txb = txb
   return res
 }
 
@@ -450,9 +452,10 @@ ColoredCoinsBuilder.prototype.buildSendTransaction = function (args) {
     args.fee = parseInt(args.fee)
   }
 
-  var txb = new bitcoinjs.TransactionBuilder(self.getNetwork())
-
-  return self._addInputsForSendTransaction(txb, args)
+  var txb = new bitcoinjs.TransactionBuilder(self._getNetwork())
+  var res = self._addInputsForSendTransaction(txb, args)
+  if (this.returnBuilder) res.txb = txb
+  return res
 }
 
 ColoredCoinsBuilder.prototype._computeCost = function (withfee, args) {
