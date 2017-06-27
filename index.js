@@ -14,8 +14,11 @@ var CC_TX_VERSION = 0x02
 var ColoredCoinsBuilder = function (properties) {
   properties = properties || {}
 
-  if (typeof properties.network !== 'undefined' && properties.network !== 'testnet' && properties.network !== 'mainnet') {
-    throw new Error('"network" must be either "testnet" or "mainnet"')
+  if (typeof properties.network !== 'undefined' &&
+      properties.network !== 'testnet' &&
+      properties.network !== 'mainnet' &&
+      properties.network !== 'litecoin') {
+    throw new Error('"network" must be "testnet", "mainnet" or "litecoin"')
   }
   this.network = properties.network || 'mainnet' // 'testnet' or 'mainnet'
 
@@ -28,6 +31,19 @@ var ColoredCoinsBuilder = function (properties) {
   this.mindustvaluemultisig = parseInt(properties.mindustvaluemultisig) || 700
   this.writemultisig = properties.writemultisig || true
 }
+
+ColoredCoinsBuilder.prototype.getNetwork = function() {
+  switch (this.network){
+    case 'testnet':
+      return bitcoinjs.networks.testnet
+      break
+    case 'litecoin':
+      return bitcoinjs.networks.litecoin
+      break
+    default:
+      return bitcoinjs.networks.bitcoin
+  }
+};
 
 ColoredCoinsBuilder.prototype.buildIssueTransaction = function (args) {
   var self = this
@@ -50,8 +66,7 @@ ColoredCoinsBuilder.prototype.buildIssueTransaction = function (args) {
 
   args.divisibility = args.divisibility || 0
   args.aggregationPolicy = args.aggregationPolicy || 'aggregatable'
-
-  var txb = new bitcoinjs.TransactionBuilder(self.network === 'testnet' ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin)
+  var txb = new bitcoinjs.TransactionBuilder(this.getNetwork())
   // find inputs to cover the issuance
   var ccArgs = self._addInputsForIssueTransaction(txb, args)
   if (!ccArgs.success) {
@@ -435,7 +450,7 @@ ColoredCoinsBuilder.prototype.buildSendTransaction = function (args) {
     args.fee = parseInt(args.fee)
   }
 
-  var txb = new bitcoinjs.TransactionBuilder(self.network === 'testnet' ? bitcoinjs.networks.testnet : bitcoinjs.networks.bitcoin)
+  var txb = new bitcoinjs.TransactionBuilder(self.getNetwork())
 
   return self._addInputsForSendTransaction(txb, args)
 }
