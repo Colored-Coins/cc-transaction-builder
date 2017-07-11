@@ -1,4 +1,5 @@
 var bitcoinjs = require('bitcoinjs-lib')
+require('bitcoinjs-testnets').register(bitcoinjs.networks);
 var BigNumber = require('bignumber.js')
 var _ = require('lodash')
 var encodeAssetId = require('cc-assetid-encoder')
@@ -17,8 +18,9 @@ var ColoredCoinsBuilder = function (properties) {
   if (typeof properties.network !== 'undefined' &&
       properties.network !== 'testnet' &&
       properties.network !== 'mainnet' &&
-      properties.network !== 'litecoin') {
-    throw new Error('"network" must be "testnet", "mainnet" or "litecoin"')
+      properties.network !== 'litecoin' &&
+      properties.network !== 'litecoin-testnet') {
+    throw new Error('"network" must one of ("testnet", "mainnet", "litecoin", "litecoin-testnet")')
   }
   this.network = properties.network || 'mainnet' // 'testnet' or 'mainnet'
 
@@ -40,6 +42,9 @@ ColoredCoinsBuilder.prototype._getNetwork = function() {
       break
     case 'litecoin':
       return bitcoinjs.networks.litecoin
+      break
+    case 'litecoin-testnet':
+      return bitcoinjs.networks.litecoin_testnet
       break
     default:
       return bitcoinjs.networks.bitcoin

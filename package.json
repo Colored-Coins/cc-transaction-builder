@@ -11,6 +11,7 @@
   "dependencies": {
     "bignumber.js": "^4.0.0",
     "bitcoinjs-lib": "^3.0.2",
+    "bitcoinjs-testnets": "^1.0.10",
     "buffer-reverse": "^1.0.1",
     "cc-assetid-encoder": "^0.6.2",
     "cc-errors": "0.1.0",
