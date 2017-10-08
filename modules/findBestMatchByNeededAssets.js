@@ -45,7 +45,7 @@ var findBestMatchByNeededAssets = function (utxos, assetList, key, txb, inputval
           debug('adding input')
           var inputIndex = txb.tx.ins.length
           if (!txb.tx.ins.some(function (txutxo, i) {
-            if (txutxo.index === utxo.index && bitcoinjs.bufferutils.reverse(txutxo.hash).toString('hex') === utxo.txid) {
+            if (txutxo.index === utxo.index && txutxo.hash.toString('hex').split('').reverse().join('') === utxo.txid) {
               debug('more assets in same utxo')
               inputIndex = i
               return true
