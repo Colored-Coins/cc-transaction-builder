@@ -658,7 +658,7 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
   if (coloredChange) {
     coloredOutputIndexes.push(txb.tx.outs.length)
   }
-  txb.addOutput(Array.isArray(args.from) ? args.from[0] : args.from, lastOutputValue)
+  txb.addOutput(changeAddress, lastOutputValue)
   debug('success')
   return { txHex: txb.tx.toHex(), metadataSha1: args.torrentHash, multisigOutputs: reedemScripts, coloredOutputIndexes: _.uniqBy(coloredOutputIndexes) }
 }
