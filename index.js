@@ -1,5 +1,6 @@
 var bitcoinjs = require('bitcoinjs-lib')
 require('bitcoinjs-testnets').register(bitcoinjs.networks);
+bitcoinjs.networks.litecoin_testnet.scriptHash = 0x3a
 var BigNumber = require('bignumber.js')
 var _ = require('lodash')
 var encodeAssetId = require('cc-assetid-encoder')
