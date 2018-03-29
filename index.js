@@ -1,5 +1,6 @@
 var bitcoinjs = require('bitcoinjs-lib')
 require('bitcoinjs-testnets').register(bitcoinjs.networks);
+bitcoinjs.networks.litecoin_testnet.scriptHash = 0x3a
 var BigNumber = require('bignumber.js')
 var _ = require('lodash')
 var encodeAssetId = require('cc-assetid-encoder')
@@ -394,11 +395,12 @@ ColoredCoinsBuilder.prototype._insertSatoshiToTransaction = function (utxos, txb
     if (financeValue.minus(missingbn) >= 0) {
       // TODO: check there is no asset here
       debug('funding tx ' + metadata.financeOutputTxid)
-      txb.tx.addInput(metadata.financeOutputTxid, metadata.financeOutput.n)
+      var txHex = Buffer.from(metadata.financeOutputTxid, 'hex').reverse();
+      txb.tx.addInput(txHex, metadata.financeOutput.n)
       inputsValue.amount += financeValue.toNumber()
       if (metadata.flags && metadata.flags.injectPreviousOutput) {
         var chunks = bitcoinjs.script.decompile(new Buffer(metadata.financeOutput.scriptPubKey.hex, 'hex'))
-        txb.tx.ins[txb.ins.length - 1].script = bitcoinjs.script.compile(chunks)
+        txb.tx.ins[txb.tx.ins.length - 1].script = bitcoinjs.script.compile(chunks)
       }
       paymentDone = true
       return paymentDone
@@ -674,15 +676,18 @@ ColoredCoinsBuilder.prototype._addInputsForSendTransaction = function (txb, args
     lastOutputValue = self._getChangeAmount(txb.tx, args.fee, totalInputs)
   }
 
-  if (numOfChanges === 2) {
-    txb.addOutput(changeAddress, lastOutputValue - self.mindustvalue)
-    lastOutputValue = self.mindustvalue
+  if (numOfChanges === 2){
+    txb.addOutput(Array.isArray(args.from) ? args.from[0] : args.from, self.mindustvalue)
   }
+
   if (coloredChange) {
     coloredOutputIndexes.push(txb.tx.outs.length)
   }
-  txb.addOutput(Array.isArray(args.from) ? args.from[0] : args.from, lastOutputValue)
+
+  txb.addOutput(changeAddress,lastOutputValue - self.mindustvalue)
+ 
   debug('success')
+  
   return { txHex: txb.tx.toHex(), metadataSha1: args.torrentHash, multisigOutputs: reedemScripts, coloredOutputIndexes: _.uniqBy(coloredOutputIndexes) }
 }
 
